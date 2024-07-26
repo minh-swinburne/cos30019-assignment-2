@@ -13,12 +13,17 @@ class Sentence:
     def __str__(self):
         pass
     
-    @abstractmethod
-    def __hash__(self):
-        pass
-    
-    def __eq__(self, other):
-        return self.__hash__() == other.__hash__()
+    def __eq__(self, other:'Sentence'):
+        if type(self) != type(other):
+            return False
+        if isinstance(self, Symbol):
+            return self.name == other.name
+        if isinstance(self, Negation):
+            return self.arg == other.arg
+        if isinstance(self, CommutativeSentence):
+            return self.connective == other.connective and self.args == other.args
+        if isinstance(self, Implication):
+            return self.antecedent == other.antecedent and self.consequent == other.consequent
     
     @abstractmethod
     def negate(self):
@@ -29,15 +34,22 @@ class Sentence:
         pass
 
 
-class Symbol(Sentence):
+class Symbol(Sentence): # atomic sentence
+    """
+    This class represents a symbol (atomic sentence).
+
+    ### Attributes:
+        - name(str): The name of the symbol
+        
+    ### Methods:
+        - negate(): Returns the negation of the symbol
+        - evaluate(model:Dict[str, bool]): Evaluates the symbol given a model
+    """
     def __init__(self, name:str):
         self.name = name
 
     def __str__(self):
         return self.name
-
-    def __hash__(self):
-        return hash(self.name)
     
     def negate(self):
         return Negation(self)
@@ -49,14 +61,21 @@ class Symbol(Sentence):
     
     
 class Negation(Sentence):
+    """
+    This class represents a negation sentence. It negates a sentence.
+
+    ### Attributes:
+        - arg(Sentence): The argument sentence to be negated
+        
+    ### Methods:
+        - negate(): Returns the negation of the argument sentence
+        - evaluate(model:Dict[str, bool]): Evaluates the negation of the argument sentence given a model
+    """
     def __init__(self, arg:Sentence):
         self.arg = arg
 
     def __str__(self):
         return f"{Connective.NEGATION.value}{self.arg}"
-
-    def __hash__(self):
-        return self.arg.__hash__()
     
     def negate(self):
         return self.arg
@@ -76,9 +95,6 @@ class CommutativeSentence(Sentence):
 
     def __str__(self):
         return f"({f" {self.connective.value} ".join(map(str, self.args))})"
-
-    def __hash__(self):
-        return hash((self.connective, self.args))
 
     @abstractmethod
     def evaluate(self, model):
@@ -127,15 +143,23 @@ class Disjunction(CommutativeSentence):
     
 
 class Implication(Sentence):
+    """
+    This class represents an implication sentence.
+    
+    ### Attributes:
+        - antecedent(Sentence): The antecedent (left clause) of the implication
+        - consequent(Sentence): The consequent (right clause) of the implication
+    
+    ### Methods:
+        - negate(): Returns the negation of the implication
+        - evaluate(model:Dict[str, bool]): Evaluates the implication given a model
+    """
     def __init__(self, antecedent:Sentence, consequent:Sentence):
         self.antecedent = antecedent
         self.consequent = consequent
 
     def __str__(self):
         return f"({self.antecedent} {Connective.IMPLICATION.value} {self.consequent})"
-
-    def __hash__(self):
-        return hash((self.antecedent, self.consequent))
 
     def negate(self):
         return Conjunction(self.antecedent, self.consequent.negate())

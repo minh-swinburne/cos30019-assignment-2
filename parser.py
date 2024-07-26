@@ -1,7 +1,5 @@
 import os, re
 from syntax import *
-from lark import Lark, Transformer
-
 
 INPUT_DIR = 'data'
 KB_KEYWORD = 'TELL'
@@ -21,35 +19,46 @@ def read_file(file_name:str) -> tuple[list[str], str]:
         ask_index = content.index(QUERY_KEYWORD)
         kb = content[tell_index + len(KB_KEYWORD) : ask_index].split(KB_SEPARATOR)
         query = content[ask_index + len(QUERY_KEYWORD):]
-        sanitize(kb), sanitize(query)
+        return sanitize(kb), sanitize(query)
         
 
 def tokenize(text:str) -> list[str]:
     token_specification = [
-        ('SYMBOL', r'[a-zA-Z][a-zA-Z0-9]*'),
-        ('LPAREN', r'\('),
-        ('RPAREN', r'\)'),
-        ('NOT', r'~'),
-        ('AND', r'&'),
-        ('OR', r'\|'),
-        ('IMPLIES', r'=>'),
-        ('BICONDITIONAL', r'<=>')
+        ('SYMBOL',        r'[a-zA-Z][a-zA-Z0-9]*'),
+        ('LPAREN',        r'\('),       # Left parenthesis
+        ('RPAREN',        r'\)'),       # Right parenthesis
+        ('NOT',           r'~'),
+        ('AND',           r'&'),
+        ('OR',            r'\|'),
+        ('IMPLIES',       r'=>'),
+        ('BICONDITIONAL', r'<=>'),
+        ('SKIP',          r'[ \t]+'),
+        ('MISMATCH',      r'.')
     ]
+    tok_regex = '|'.join('(?P<%s>%s)' % pair for pair in token_specification)
+    # print(tok_regex)
+    get_token = re.compile(tok_regex).match
+    pos = 0
     tokens = []
-    for tok_type, tok_regex in token_specification:
-        for match in re.finditer(tok_regex, text):
-            tok = match.group(0)
-            tokens.append((match.start(), tok_type, tok))
-    tokens.sort(key=lambda x: x[0])
-    return [(token[1], token[2]) for token in tokens]
+    while pos < len(text):
+        match = get_token(text, pos)
+        if match is None:
+            raise SyntaxError('Unexpected character: %s' % text[pos])
+        pos = match.end()
+        token_type = match.lastgroup
+        if token_type != 'SKIP' and token_type != 'MISMATCH':
+            tokens.append((token_type, match.group(token_type)))
+    return tokens
 
 
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
-        self.current_token = None
-        self.pos = -1
-        self.advance()
+        self.pos = 0
+        
+    @property
+    def current_token(self):
+        return self.tokens[self.pos]
         
     def advance(self):
         self.pos += 1
