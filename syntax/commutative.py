@@ -35,5 +35,11 @@ class CommutativeSentence(Sentence):
         return False
 
     @abstractmethod
-    def evaluate(self, model):
+    def evaluate(self, model) -> bool:
         pass
+    
+    def symbols(self) -> set[str]:
+        symbols = set()
+        for arg in self.args:
+            symbols |= arg.symbols()
+        return symbols

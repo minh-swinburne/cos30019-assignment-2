@@ -18,9 +18,17 @@ def read_file(file_name:str) -> tuple[list[str], str]:
         tell_index = content.index(KB_KEYWORD)
         ask_index = content.index(QUERY_KEYWORD)
         kb = content[tell_index + len(KB_KEYWORD) : ask_index].split(KB_SEPARATOR)
+        sanitized_kb = [sanitize(sentence) for sentence in kb if sanitize(sentence)]
         query = content[ask_index + len(QUERY_KEYWORD):]
-        return sanitize(kb), sanitize(query)
-        
+        return sanitized_kb, sanitize(query)
+    
+
+def parse_kb_and_query(file_name:str) -> tuple[Conjunction, Sentence]:
+    kb, query = read_file(file_name)
+    kb = [parse(tokenize(sentence)) for sentence in kb]
+    query = parse(tokenize(query))
+    return Conjunction(*kb), query
+
 
 def tokenize(text:str) -> list[str]:
     token_specification = [
@@ -116,12 +124,3 @@ def _parse_symbol(tokens:list[tuple[str, str]]) -> tuple[Symbol, list[tuple[str,
         token, tokens = tokens[0], tokens[1:]
         return Symbol(token[1]), tokens
     raise SyntaxError("Expected a symbol")
-
-
-if __name__ == '__main__':
-    sentence_str = "(a<=>(c=>~d)) & b & (b=>a)"
-    print("Sentence string:", sentence_str, "\n")
-    tokens = tokenize(sanitize(sentence_str))
-    print("Tokens:", tokens, "\n")
-    sentence = parse(tokens)
-    print("Parsed sentence:", sentence, "(type:", type(sentence).__name__, ")")

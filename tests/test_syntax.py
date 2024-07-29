@@ -18,6 +18,7 @@ class TestSyntax(unittest.TestCase):
         self.assertTrue(self.p.evaluate(self.model))
         self.assertFalse(self.q.evaluate(self.model))
         self.assertIsNone(self.r.evaluate(self.model))
+        self.assertSetEqual(self.p.symbols(), {'p'})
 
     def test_negation(self):
         # ~p: False, ~q: True, ~~q: False, ~r: None
@@ -26,26 +27,32 @@ class TestSyntax(unittest.TestCase):
         self.assertTrue(self.q.negate().evaluate(self.model))
         self.assertFalse(self.q.negate().negate().evaluate(self.model))
         self.assertIsNone(self.r.negate().evaluate(self.model))
+        self.assertSetEqual(self.q.negate().symbols(), {'q'})
 
     def test_conjunction(self):
         # p & q: False, p & q & r: None
         self.assertFalse(Conjunction(self.p, self.q).evaluate(self.model))
         self.assertIsNone(Conjunction(self.p, self.q, self.r).evaluate(self.model))
+        self.assertSetEqual(Conjunction(self.p, self.q).symbols(), {'p', 'q'})
 
     def test_disjunction(self):
         # p || q: True, p || q || r: None
         self.assertTrue(Disjunction(self.p, self.q).evaluate(self.model))
         self.assertIsNone(Disjunction(self.p, self.q, self.r).evaluate(self.model))
+        self.assertSetEqual(Disjunction(self.p, self.q, self.r).symbols(), {'p', 'r', 'q'})
 
     def test_implication(self):
         # p => q: False, q => p: True, p => (q => r): None
         self.assertFalse(Implication(self.p, self.q).evaluate(self.model))
         self.assertTrue(Implication(self.q, self.p).evaluate(self.model))
         self.assertIsNone(Implication(self.p, Implication(self.q, self.r)).evaluate(self.model))
+        self.assertSetEqual(Implication(self.p, self.q).symbols(), {'p', 'q'})
+        self.assertSetEqual(Implication(self.p, Implication(self.q, self.r)).symbols(), {'p', 'q', 'r'})
 
     def test_biconditional(self):
         # p <=> q: False
         self.assertFalse(Biconditional(self.p, self.q).evaluate(self.model))
+        self.assertSetEqual(Biconditional(self.p, self.q).symbols(), {'p', 'q'})
 
     def test_complex_sentences(self):
         # (p & (q || r)) => t: True, (p & (q || r)) => (t <=> ~p): None

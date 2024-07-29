@@ -40,12 +40,12 @@ class Implication(Sentence):
         from .conjunction import Conjunction
         return Conjunction(self.antecedent, self.consequent.negate())
 
-    def evaluate(self, model):
+    def evaluate(self, model) -> bool:
         antedecent = self.antecedent.evaluate(model)
         consequent = self.consequent.evaluate(model)
         if antedecent is None or consequent is None:
             return None
         return not antedecent or consequent
     
-    def symbols(self):
+    def symbols(self) -> set[str]:
         return self.antecedent.symbols() | self.consequent.symbols()

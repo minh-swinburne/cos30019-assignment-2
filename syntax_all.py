@@ -153,6 +153,12 @@ class CommutativeSentence(Sentence):
     def evaluate(self, model):
         pass
     
+    def symbols(self) -> set[str]:
+        symbols = set()
+        for arg in self.args:
+            symbols |= arg.symbols()
+        return symbols
+    
 
 class Conjunction(CommutativeSentence):
     priority = 2
