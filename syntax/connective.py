@@ -12,4 +12,9 @@ if __name__ == "__main__":
     print(Connective.NEGATION.value)
     print(Connective.CONJUNCTION)
     print(Connective.DISJUNCTION.name)
-    print(Connective.IMPLICATION > Connective.BICONDITIONAL)
+    # print(Connective.IMPLICATION > Connective.BICONDITIONAL)
+    connective = "NEGATION"
+    print(Connective[connective])
+    # print(Connective["~"])
+    print(Connective("&"))
+    # print(Connective[0])

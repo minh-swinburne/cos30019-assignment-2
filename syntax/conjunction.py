@@ -4,6 +4,8 @@ from .commutative import CommutativeSentence
 
 
 class Conjunction(CommutativeSentence):
+    priority = 2
+    
     def __init__(self, *args:Sentence):
         flattened_args = []
         for arg in args:

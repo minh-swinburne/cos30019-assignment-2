@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .connective import Connective
 from .sentence import Sentence
 
@@ -13,17 +14,33 @@ class Negation(Sentence):
         - negate(): Returns the negation of the argument sentence
         - evaluate(model:Dict[str, bool]): Evaluates the negation of the argument sentence given a model
     """
+    priority = 1
+    
     def __init__(self, arg:Sentence):
         self.arg = arg
 
-    def __str__(self):
-        return f"{Connective.NEGATION.value}{self.arg}"
+    def __repr__(self):
+        from .symbol import Symbol
+        if isinstance(self.arg, Symbol):
+            return f"{Connective.NEGATION.value}{self.arg}"
+        return f"{Connective.NEGATION.value}({self.arg})"
     
-    def __eq__(self, other:Sentence):
-        return super().__eq__(other) and self.arg == other.arg
+    def __hash__(self):
+        return hash(self.arg)
+    
+    def __eq__(self, other:Negation):
+        if super().__eq__(other):
+            return self.arg == other.arg
+        return False
     
     def negate(self) -> Sentence:
         return self.arg
 
     def evaluate(self, model) -> bool:
-        return not self.arg.evaluate(model)
+        result = self.arg.evaluate(model)
+        if result is None:
+            return None
+        return not result
+    
+    def symbols(self) -> set[str]:
+        return self.arg.symbols()

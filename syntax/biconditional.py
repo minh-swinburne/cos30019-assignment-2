@@ -4,13 +4,16 @@ from .commutative import CommutativeSentence
 
 
 class Biconditional(CommutativeSentence):
+    priority = 5
+    
     def __init__(self, *args:Sentence):
         if len(args) != 2:
             raise ValueError("Biconditional sentence must have exactly 2 arguments")
         super().__init__(Connective.BICONDITIONAL, *args)
 
     def negate(self):
-        return Biconditional(self.args[0], self.args[1].negate())
+        arg_1, arg_2 = self.args
+        return Biconditional(arg_1, arg_2.negate())
 
     def evaluate(self, model):
         # args = list(self.args)

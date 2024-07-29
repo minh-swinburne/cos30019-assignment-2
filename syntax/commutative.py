@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import abstractmethod
 from .connective import Connective
 from .sentence import Sentence
@@ -10,13 +11,28 @@ class CommutativeSentence(Sentence):
         if connective == Connective.IMPLICATION or connective == Connective.NEGATION:
             raise ValueError(f"Connective {connective.name} is not commutative")
         self.connective = connective
-        self.args = set(args)
+        self.args = frozenset(args)
 
-    def __str__(self):
-        return f"({f" {self.connective.value} ".join(map(str, self.args))})"
+    def __repr__(self):
+        from .symbol import Symbol
+        from .negation import Negation
+        arg_strs = []
+        args = list(self.args)
+        args.sort(key=lambda x: str(x))
+        for arg in args:
+            if not isinstance(arg, (Symbol, Negation)):
+                arg_strs.append(f"({arg})")
+            else:
+                arg_strs.append(str(arg))
+        return f" {self.connective.value} ".join(arg_strs)
+        
+    def __hash__(self):
+        return hash(self.args)
     
-    def __eq__(self, other: Sentence):
-        return super().__eq__(other) and self.args == other.args
+    def __eq__(self, other: CommutativeSentence):
+        if super().__eq__(other):
+            return self.args == other.args
+        return False
 
     @abstractmethod
     def evaluate(self, model):
