@@ -1,6 +1,7 @@
 from __future__ import annotations
 from .connective import Connective
 from .sentence import Sentence
+from .symbol import Symbol
 
 
 class Negation(Sentence):
@@ -12,15 +13,14 @@ class Negation(Sentence):
         
     ### Methods:
         - negate(): Returns the negation of the argument sentence
-        - evaluate(model:Dict[str, bool]): Evaluates the negation of the argument sentence given a model
+        - evaluate(model:dict[Symbol, bool]): Evaluates the negation of the argument sentence given a model
+        - symbols(): Returns the set of symbols in the argument sentence
     """
-    priority = 1
-    
     def __init__(self, arg:Sentence):
         self.arg = arg
 
     def __repr__(self):
-        from .symbol import Symbol
+        # For example, "~A" or "~(A & B)"
         if isinstance(self.arg, Symbol):
             return f"{Connective.NEGATION.value}{self.arg}"
         return f"{Connective.NEGATION.value}({self.arg})"
@@ -42,5 +42,5 @@ class Negation(Sentence):
             return None
         return not result
     
-    def symbols(self) -> set[str]:
+    def symbols(self) -> set[Symbol]:
         return self.arg.symbols()

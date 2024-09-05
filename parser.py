@@ -1,36 +1,98 @@
+"""
+This module contains the parser for the knowledge base and query.
+
+### Functions:
+    - parse_kb_and_query(file_name: str) -> tuple[Sentence, Sentence]: Parse the knowledge base and query from the file.
+    - sanitize(input: str) -> str: Sanitize the input string by removing all whitespaces and newlines.
+    - read_file(file_name: str) -> tuple[list[str], str, bool]: Read the content of the file and return the knowledge base, query, and optionally expected result as strings.
+    - tokenize(text: str) -> list[tuple[str, str]]: Tokenize the input text into a list of tokens.
+    - escaped_connective(connective: str) -> str: Escape the connective for regex.
+    - parse(tokens: list[tuple[str, str]]) -> Sentence: Parse the tokens into a Sentence object.
+    - _parse_biconditional(tokens): Parse the biconditional connective.
+    - _parse_implication(tokens): Parse the implication connective.
+    - _parse_disjunction(tokens): Parse the disjunction connective.
+    - _parse_conjunction(tokens): Parse the conjunction connective.
+    - _parse_negation(tokens): Parse the negation connective.
+    - _parse_parentheses(tokens): Parse the parentheses.
+    - _parse_symbol(tokens): Parse the symbol.
+"""
 import os, re
 from syntax import *
 
 INPUT_DIR = 'data'
-KB_KEYWORD = 'TELL'
+KB_KEYWORD = 'TELL\n'
 KB_SEPARATOR = ';'
-QUERY_KEYWORD = 'ASK'
+QUERY_KEYWORD = 'ASK\n'
+RESULT_KEYWORD = 'EXPECT\n'
+    
+
+def parse_kb_and_query(file_name:str) -> tuple[Sentence, Sentence]:
+    """
+    Parse the knowledge base and query from the file.
+
+    ### Args:
+        - file_name (str): The name of the file to read from.
+    
+    ### Returns:
+        - tuple[Sentence, Sentence]: A tuple containing the knowledge base and query as Sentence objects.
+    """
+    kb, query, _ = read_file(file_name)
+    kb = [parse(tokenize(sentence)) for sentence in kb]
+    query = parse(tokenize(query))
+    return Conjunction(*kb) if len(kb) > 1 else kb[0], query
 
 
 def sanitize(input:str):
+    """
+    Sanitize the input string by removing all whitespaces and newlines.
+        
+    ### Args:
+        - input (str): The input string to sanitize.
+    
+    ### Returns:
+        - str: The sanitized string
+    """
     return input.replace('\n', ' ').replace(' ', '').strip()
 
 
-def read_file(file_name:str) -> tuple[list[str], str]:
+def read_file(file_name:str) -> tuple[list[str], str, bool]:
+    """
+    Read the content of the file and return the knowledge base and query as strings.
+
+    ### Args:
+        - file_name (str): The name of the file to read from.
+        
+    ### Returns:
+        - tuple[list[str], str, bool]: A tuple containing the knowledge base and query as strings.
+    """
     file_path = os.path.join(INPUT_DIR, file_name)
     with open(file_path, 'r') as file:
         content = file.read()
         tell_index = content.index(KB_KEYWORD)
         ask_index = content.index(QUERY_KEYWORD)
+        result_index = content.index(RESULT_KEYWORD) if RESULT_KEYWORD in content else len(content)
+        
         kb = content[tell_index + len(KB_KEYWORD) : ask_index].split(KB_SEPARATOR)
         sanitized_kb = [sanitize(sentence) for sentence in kb if sanitize(sentence)]
-        query = content[ask_index + len(QUERY_KEYWORD):]
-        return sanitized_kb, sanitize(query)
-    
-
-def parse_kb_and_query(file_name:str) -> tuple[Conjunction, Sentence]:
-    kb, query = read_file(file_name)
-    kb = [parse(tokenize(sentence)) for sentence in kb]
-    query = parse(tokenize(query))
-    return Conjunction(*kb), query
+        query = content[ask_index + len(QUERY_KEYWORD) : result_index]
+        # Expected result is optional, to be used for testing and debugging
+        expected_result = content[result_index + len(RESULT_KEYWORD) :].strip() if RESULT_KEYWORD in content else None
+        return sanitized_kb, sanitize(query), sanitize(expected_result) == 'YES' if expected_result else None
 
 
-def tokenize(text:str) -> list[str]:
+def tokenize(text:str) -> list[tuple[str, str]]:
+    """
+    Tokenize the input text into a list of tokens.
+
+    ### Args:
+        - text (str): The text to tokenize.
+
+    ### Returns:
+        - list[tuple[str, str]]: The list of tokens.
+        
+    ### Raises:
+        - SyntaxError: If an unexpected character is found.
+    """
     token_specification = [
         ('SYMBOL',        r'[a-zA-Z][a-zA-Z0-9]*'),
         ('LPAREN',        r'\('),       # Left parenthesis
@@ -64,6 +126,18 @@ def escaped_connective(connective:str) -> str:
 
 
 def parse(tokens:list[tuple[str, str]]) -> Sentence:
+    """
+    Parse the tokens into a Sentence object.
+
+    ### Args:
+        - tokens (list[tuple[str, str]]): The list of tokens to parse.
+        
+    ### Returns:
+        - Sentence: The Sentence object.
+    
+    ### Raises:
+        - SyntaxError: If there are unexpected tokens at the end of the input.
+    """
     expr, tokens = _parse_biconditional(tokens)
     if tokens:
         raise SyntaxError("Unexpected tokens at end of input")
@@ -105,6 +179,9 @@ def _parse_conjunction(tokens:list[tuple[str, str]]) -> tuple[Sentence, list[tup
 def _parse_negation(tokens:list[tuple[str, str]]) -> tuple[Sentence, list[tuple[str, str]]]:
     if tokens and tokens[0][0] == 'NOT':
         expr, tokens = _parse_parentheses(tokens[1:])
+        # Handle double negation
+        if isinstance(expr, Negation):
+            return expr.arg, tokens
         return Negation(expr), tokens
     return _parse_parentheses(tokens)
 

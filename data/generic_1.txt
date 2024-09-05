@@ -2,3 +2,5 @@ TELL
 (a <=> (c => ~d)) & b & (b => a); c; ~f || g;
 ASK
 ~d & (~g => ~f)
+EXPECT
+YES

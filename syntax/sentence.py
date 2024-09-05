@@ -11,7 +11,8 @@ class Sentence:
         - __hash__() <<abstract>>: Returns the hash value of the sentence
         - __eq__(other:Sentence): Compares the hash values of two sentences
         - negate() <<abstract>>: Returns the negation of the sentence
-        - evaluate(model:Dict[str, bool]) <<abstract>>: Evaluates the sentence given
+        - evaluate(model:dict[Symbol, bool]) <<abstract>>: Evaluates the sentence given
+        - symbols() <<abstract>>: Returns the set of symbols in the sentence
     """
     @abstractmethod
     def __repr__(self):
@@ -30,9 +31,9 @@ class Sentence:
         pass
 
     @abstractmethod
-    def evaluate(self, model) -> bool:
+    def evaluate(self, model:dict) -> bool:
         pass
     
     @abstractmethod
-    def symbols(self) -> set[str]:
+    def symbols(self):
         pass
