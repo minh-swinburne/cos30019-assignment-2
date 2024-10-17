@@ -24,7 +24,7 @@ KB_KEYWORD = 'TELL\n'
 KB_SEPARATOR = ';'
 QUERY_KEYWORD = 'ASK\n'
 RESULT_KEYWORD = 'EXPECT\n'
-    
+
 
 def parse_kb_and_query(file_name:str) -> tuple[Sentence, Sentence]:
     """
@@ -32,7 +32,7 @@ def parse_kb_and_query(file_name:str) -> tuple[Sentence, Sentence]:
 
     ### Args:
         - file_name (str): The name of the file to read from.
-    
+
     ### Returns:
         - tuple[Sentence, Sentence]: A tuple containing the knowledge base and query as Sentence objects.
     """
@@ -45,10 +45,10 @@ def parse_kb_and_query(file_name:str) -> tuple[Sentence, Sentence]:
 def sanitize(input:str):
     """
     Sanitize the input string by removing all whitespaces and newlines.
-        
+
     ### Args:
         - input (str): The input string to sanitize.
-    
+
     ### Returns:
         - str: The sanitized string
     """
@@ -61,7 +61,7 @@ def read_file(file_name:str) -> tuple[list[str], str, bool]:
 
     ### Args:
         - file_name (str): The name of the file to read from.
-        
+
     ### Returns:
         - tuple[list[str], str, bool]: A tuple containing the knowledge base and query as strings.
     """
@@ -71,7 +71,7 @@ def read_file(file_name:str) -> tuple[list[str], str, bool]:
         tell_index = content.index(KB_KEYWORD)
         ask_index = content.index(QUERY_KEYWORD)
         result_index = content.index(RESULT_KEYWORD) if RESULT_KEYWORD in content else len(content)
-        
+
         kb = content[tell_index + len(KB_KEYWORD) : ask_index].split(KB_SEPARATOR)
         sanitized_kb = [sanitize(sentence) for sentence in kb if sanitize(sentence)]
         query = content[ask_index + len(QUERY_KEYWORD) : result_index]
@@ -89,9 +89,13 @@ def tokenize(text:str) -> list[tuple[str, str]]:
 
     ### Returns:
         - list[tuple[str, str]]: The list of tokens.
-        
+
     ### Raises:
         - SyntaxError: If an unexpected character is found.
+
+    ### References:
+        - https://docs.python.org/3/howto/regex.html#compiling-regular-expressions
+        - https://docs.python.org/3/library/re.html#match-objects
     """
     token_specification = [
         ('SYMBOL',        r'[a-zA-Z][a-zA-Z0-9]*'),
@@ -105,6 +109,7 @@ def tokenize(text:str) -> list[tuple[str, str]]:
         ('SKIP',          r'[ \t]+'),
         ('MISMATCH',      r'.')
     ]
+    # regex for all tokens as named groups
     tok_regex = '|'.join('(?P<%s>%s)' % pair for pair in token_specification)
     # print(tok_regex)
     get_token = re.compile(tok_regex).match
@@ -114,7 +119,9 @@ def tokenize(text:str) -> list[tuple[str, str]]:
         match = get_token(text, pos)
         if match is None:
             raise SyntaxError('Unexpected character: %s' % text[pos])
+        # set position to the index of the end of the match
         pos = match.end()
+        # get the token type
         token_type = match.lastgroup
         if token_type != 'SKIP' and token_type != 'MISMATCH':
             tokens.append((token_type, match.group(token_type)))
@@ -131,10 +138,10 @@ def parse(tokens:list[tuple[str, str]]) -> Sentence:
 
     ### Args:
         - tokens (list[tuple[str, str]]): The list of tokens to parse.
-        
+
     ### Returns:
         - Sentence: The Sentence object.
-    
+
     ### Raises:
         - SyntaxError: If there are unexpected tokens at the end of the input.
     """
