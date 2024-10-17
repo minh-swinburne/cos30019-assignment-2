@@ -3,6 +3,7 @@
 ## Description
 
 This project is an inference engine developed for the Assignment 2 of course unit COS30019 - Introduction to Artificial Intelligence. It uses various logical inference methods to derive conclusions from a given knowledge base.
+This repository is actually a clone repository from [my teammate's repo](https://github.com/Eurosmart2004/COS30019-Inference-Engine) which we worked on during the assignment.
 
 ### General Information
 
@@ -158,9 +159,9 @@ Multiple unit tests have been implemented for the modules of the program using t
 
 For methods testing, we use the `debug.py` script in the root folder.
 
-## Contributing
+## Contribution
 
-This project is a collaborative effort between Quang Thien and Thanh Minh. We both have contributed significantly to the development and success of this project.
+This project is a collaborative effort between Le Quang Thien and Nguyen Thi Thanh Minh. We both have contributed significantly to the development and success of this project.
 
 ## License
 
